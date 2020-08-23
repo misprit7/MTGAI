@@ -1,3 +1,4 @@
+# Class representing full game state at any given point
 
 import sys
 sys.path.append(r'./src')
@@ -67,14 +68,6 @@ class Game:
     def hand(self):
         # return [self.zoneName(x.zone) for x in self.gameObjects]
         return [x for x in self.gameObjects if self.zoneName(x.zone) == 'ZoneType_Hand']
-                
-class Zone:
-    def __init__(self, zone):
-        self.type = zone.get('type')
-        self.visibility = zone.get('visibility')
-        self.id = zone.get('zoneId')
-
-        self.owner = zone.get('ownerSeatId')
         
 
 

@@ -1,3 +1,12 @@
+# Helper module to get data and parse names, etc.
+# Note that most of this code was stolen from the python-mtga module
+
+# The main part of this module is cards, loc and enum
+# These are all retrieved from the local machine where mtga holds them to keep up to date
+# cards is a list of all mtga cards with attributes
+# loc is a dictionary relating text ids with text
+# enums is a list of dictionaries associating misc. attributes with their ids
+
 import json, os, re, sys
 from pathlib import Path
 
@@ -67,6 +76,8 @@ with open(json_filepaths["loc"], "r", encoding="utf-8") as loc_in:
 with open(json_filepaths["enums"], "r", encoding="utf-8") as enums_in:
     enums = json.load(enums_in)
 
+
+# Helper functions, name pretty much describes them
 
 def namefromgrpid(grpid):
     return loctext([x['titleId'] for x in cards if x['grpid'] == grpid][0])

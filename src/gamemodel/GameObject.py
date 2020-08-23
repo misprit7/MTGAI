@@ -1,3 +1,5 @@
+# GameObject and inheritors
+
 import datahelper as dh
 
 class GameObject:
@@ -14,7 +16,6 @@ class GameObject:
 class Card(GameObject):
     def __init__(self, gameObject):
         GameObject.__init__(self, gameObject)
-        self.cardData = [x for x in dh.cards if x['grpid'] == gameObject['grpId']][0]
         self.cardTypes = gameObject.get('cardTypes')
         self.color = gameObject.get('color')
         
@@ -23,9 +24,9 @@ class Permanent(Card):
     def __init__(self, gameObject):
         Card.__init__(self, gameObject)
 
-        self.isTapped = gameObject.get('isTapped') if 'isTapped' in gameObject else False
-        self.subtypes = gameObject.get('subtypes') if 'subtypes' in gameObject else []
-        self.supertypes = gameObject.get('supertypes') if 'supertypes' in gameObject else []
+        self.isTapped = gameObject.get('isTapped', False)
+        self.subtypes = gameObject.get('subtypes', [])
+        self.supertypes = gameObject.get('supertypes', [])
 
 class Creature(Permanent):
     def __init__(self, gameObject):
@@ -33,8 +34,8 @@ class Creature(Permanent):
 
         self.power = gameObject.get('power').get('value') if 'power' in gameObject and 'value' in gameObject['power'] else 0
         self.toughness = gameObject.get('toughness').get('value') if 'toughness' in gameObject and gameObject and 'value' in gameObject['toughness'] else 0
-        self.hasSummoningSickness = gameObject.get('hasSummoningSickness') if 'hasSummoningSickness' in gameObject else False
-        self.attackState = gameObject.get('attackState') if 'attackState' in gameObject else ""
+        self.hasSummoningSickness = gameObject.get('hasSummoningSickness', False)
+        self.attackState = gameObject.get('attackState', '')
 
 class Land(Permanent):
     def __init__(self, gameObject):

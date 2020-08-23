@@ -1,3 +1,5 @@
+# Player class
+
 import datahelper as dh
 
 class Player:

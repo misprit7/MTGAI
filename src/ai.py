@@ -1,3 +1,7 @@
+# Intelligence behind game decisions
+# 
+# Note that this is heavily WIP right now, so it's pretty much all test stuff for the moment
+
 import sys
 import gamecontroller as gc, logparser as lp
 sys.path.append(r'./src/gamemodel')

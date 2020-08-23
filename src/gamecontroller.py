@@ -1,4 +1,6 @@
 
+# Handles the interactions between AI and GUI
+
 import pyautogui as ag, numpy as np
 import time
 # For OCR, see https://stackoverflow.com/questions/48118094/pytesseract-trying-to-detect-text-from-on-screen
@@ -11,15 +13,18 @@ def click():
     time.sleep(0.1)
     ag.mouseUp()
 
+# Have to scroll in chunks for arena to accept it
 def scroll(amount):
     for i in range(amount if amount > 0 else -amount):
         ag.scroll(5 if amount > 0 else -5)
 
+# Have to hold a bit for arena to accept it
 def press(key):
     ag.keyDown(key)
     time.sleep(0.1)
     ag.keyUp(key)
 
+# Consistent spot to reset mouse to
 def mreset():
     ag.moveTo(50, 540)
 
@@ -54,6 +59,11 @@ def locatecard(cardnum, cardpile, piles):
 
     return x
 
+# Plays card
+# cardnum: number of which card to play
+# cardpile: which pile to play from
+# piles: array of ints where each element represents how many cards are in that pile
+# For example if you have 2 cards in hand and you can cast 3 cards from your graveyard, piles = [2, 3]
 def playcard(cardnum, cardpile, piles):
 
     x = locatecard(cardnum, cardpile, piles)

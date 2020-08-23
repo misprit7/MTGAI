@@ -1,3 +1,6 @@
+# For vision parsing
+# Probably won't actually end up using this, left it for now in case I changem my mind
+# 
 # https://answers.opencv.org/question/94459/seperate-touching-objects/
 
 
