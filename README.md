@@ -44,7 +44,8 @@ Once the AI has made a decision the program must interact with the GUI to actual
 
 ## Setup for Devs
 
-Use a virtual environment for dev. This is used to keep package versions consistent. To install this feature, run the following: 
+### Virtual Environment
+Use a virtual environment for development. This is used to keep package versions consistent. To install this feature, run the following: 
 
 ```
 pip install virtualenv
@@ -53,7 +54,16 @@ pip install virtualenv
 To set up, run the following in the main directory: 
 ```
 python -m venv env
-source env/bin/activate
+source env/bin/activate (Linux) or ./env/Scripts/activate (Windows)
 pip install -r requirements.txt
 ```
-In the future to enter the virtual environment use `source env/bin/activate.` To exit virtual environment, just type `deactivate` 
+In the future to enter the virtual environment use `source env/bin/activate` or `./env/Scripts/activate.` To exit virtual environment, just type `deactivate.` 
+
+### Config file
+Make a file called config.json in root path. Format as follows with your respective username and logpaths (otherwise defaults to values shown): 
+```
+{
+    "playername": "_rednax_#30532", 
+    "logpath": "%APPDATA%/../LocalLow/Wizards Of The Coast/MTGA/"
+}
+```

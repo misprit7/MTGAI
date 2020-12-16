@@ -12,7 +12,7 @@
 
 # config variables
 playername = '_rednax_#30532'
-logpath = "C:\\Users\\Kids\\AppData\\LocalLow\\Wizards Of The Coast\\MTGA\\Player.log"
+logpath = "C:\\Users\\xander\\AppData\\LocalLow\\Wizards Of The Coast\\MTGA\\Player.log"
 
 import json, time, re, sys
 sys.path.append(r'./src/gamemodel')
@@ -56,7 +56,6 @@ def parseLine(gamestate, line):
                             handid = next(x['zoneId'] for x in gamestate['zones'] if x['type'] == 'ZoneType_Hand' and x['ownerSeatId'] == gamestate['curPlayer'])
                             cards = [x['instanceId'] for x in gamestate['gameObjects'] if x['zoneId'] == handid]
                             gamestate['cardOrder'] = sorted(cards, key=lambda x: (dh.cmcfromgrpid(grpidfrominstanceid(gamestate, x)), dh.namefromgrpid(grpidfrominstanceid(gamestate, x))))
-                            print(gamestate['cardOrder'])
                     except Exception as e:
                         # print(e)
                         pass

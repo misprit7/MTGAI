@@ -2,11 +2,15 @@
 # Handles the interactions between AI and GUI
 
 import pyautogui as ag, numpy as np
-import time
+import time, threading, sys, json, re
+import ConfigHelper as config
+from gamemodel import datahelper as dh
 # For OCR, see https://stackoverflow.com/questions/48118094/pytesseract-trying-to-detect-text-from-on-screen
 # https://stackoverflow.com/questions/48928592/how-to-get-the-co-ordinates-of-the-text-recogonized-from-image-using-ocr-in-pyth
 # pytesseract.pytesseract.tesseract_cmd = 'C:\\Program Files (x86)\\Tesseract-OCR\\tesseract.exe'
 
+cards = []
+indexing = False
 
 def click():
     ag.mouseDown()
@@ -59,27 +63,11 @@ def locatecard(cardnum, cardpile, piles):
 
     return x
 
-# Plays card
-# cardnum: number of which card to play
-# cardpile: which pile to play from
-# piles: array of ints where each element represents how many cards are in that pile
-# For example if you have 2 cards in hand and you can cast 3 cards from your graveyard, piles = [2, 3]
-def playcard(cardnum, cardpile, piles):
-
-    x = locatecard(cardnum, cardpile, piles)
+def playcard(id):
+    while id not in cards:
+        time.sleep(0.1)
     
-    dragcard(x)
-
-    mreset()
-
-def selectcard(cardnum, cardpile, piles):
-
-    x = locatecard(cardnum, cardpile, piles)
-
-    ag.moveTo(x, 1900, duration=0.1)
-    ag.click()
-
-    mreset()
+    dragcard(cards[id][0])
 
 def dragcard(x):
     ag.moveTo(x, 1900, duration=0.1)
@@ -97,12 +85,77 @@ def chooseoption(numoptions, choice):
         ag.moveTo(1200 if choice == 2 else 720, 450, duration=0.1)
         click()
 
+def beginindexing():
+    readthread = threading.Thread(target=readhovercards)
+    hoverthread = threading.Thread(target=indexhover)
+
+    cards = []
+    indexing = True
+
+    readthread.start()
+    hoverthread.start()
+
+def stopindexing():
+    indexing = False
+
+def hoverover(zone):
+    start = (0, 0)
+    end = (0, 0)
+    duration = 0
+    if zone == dh.zones.hand:
+        start = (10, 1079)
+        end = (1920, 1079)
+        duration = 4
+    elif zone == dh.zones.battlefield:
+        start = (10, 775)
+        end = (1920, 775)
+        duration = 4
+    ag.moveTo(start[0], start[1])
+    ag.click()
+    ag.moveTo(end[0], end[1], duration=duration)
+
+def indexhover():
+    for i in dh.zones:
+        if indexing:
+            hoverover(i)
+
+def readhovercards():
+    f = open(config.logpath)
+    for line in f:
+        f.readline()
+
+    lastpnt = (0, 0)
+    lastid = 0
+    
+
+    while indexing:
+        where = f.tell()
+        msg = f.read()
+        if not msg:
+            time.sleep(0.01)
+            f.seek(where)
+        else:
+            try:
+                trans = json.loads(re.sub(r'^.*?{', '{', msg.replace('\n', ' ')))
+                uiMessage = trans['payload']['uiMessage']['onHover']
+                pos = ag.position()
+
+                if 'objectId' in uiMessage:
+                    id = uiMessage['objectId']
+                    lastid = id
+                    lastpnt = (pos[0], pos[1])
+                else:
+                    cards.append({lastid: ((lastpnt[0] + pos[0])/2, (lastpnt[1] + pos[1])/2)})
+                    # print('New card. ID: ' + str(lastid) + '; pos: ' + str(cards[lastid]))
+
+            except:
+                # print("line parse failed")
+                pass
+
 if __name__ == "__main__":
-    startgame('bot')
-    # openingHand(True)
-    # selectcard(4, 0, [5])
-    # time.sleep(3)
-    # passpriority()
-    # allattack()
-    # playcard(4, 0, [5])
-    # chooseoption(2, 2)
+    # startgame('bot')
+    x = threading.Thread(target=readhovercards)
+    x.start()
+    hoverover(dh.zones.hand)
+    hoverover(dh.zones.battlefield)
+    print(cards)

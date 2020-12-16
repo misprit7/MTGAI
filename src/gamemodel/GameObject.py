@@ -11,7 +11,8 @@ class GameObject:
         self.visibility = gameObject.get('visibility')
         self.type = gameObject.get('type')
         self.zone = gameObject.get('zoneId')
-        self.name = dh.namefromtitleid(gameObject.get('name'))
+
+        self.name = '' if 'name' not in gameObject else dh.loctext(gameObject.get('name'))
         
 class Card(GameObject):
     def __init__(self, gameObject):

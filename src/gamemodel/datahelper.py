@@ -8,6 +8,7 @@
 # enums is a list of dictionaries associating misc. attributes with their ids
 
 import json, os, re, sys
+from enum import Enum
 from pathlib import Path
 
 def _get_data_location_hardcoded():
@@ -78,7 +79,6 @@ with open(json_filepaths["enums"], "r", encoding="utf-8") as enums_in:
 
 
 # Helper functions, name pretty much describes them
-
 def namefromgrpid(grpid):
     return loctext([x['titleId'] for x in cards if x['grpid'] == grpid][0])
 
@@ -87,3 +87,17 @@ def loctext(id):
 
 def cmcfromgrpid(grpid):
     return next(x['cmc'] for x in cards if x['grpid'] == grpid)
+
+
+# Constants
+keyid = {
+    'actions': 'instanceId', 
+    'annotations': 'id', 
+    'gameObjects': 'instanceId',
+    'players': 'controllerSeatId', 
+    'teams': 'id', 
+    'timers': 'timerId', 
+    'zones': 'zoneId'
+}
+
+zones = Enum('zone', 'hand battlefield graveyard library')
