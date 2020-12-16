@@ -1,16 +1,22 @@
+from typing import Any, Dict, List
 import gamecontroller as gc
 
 class Choice:
-    def __init__(self, choice):
+    def __init__(self, choice: Dict[str, Any]) -> None:
         self.actionType = choice.get('actionType')
 
-    def execute(self):
+    def execute(self) -> None:
         pass
 
 
 
 class Cast(Choice):
-    def __init__(self, choice):
+    grpid: int
+    instanceId: int
+    manaCost: List[Dict[str, Any]]
+    shouldStop: bool
+
+    def __init__(self, choice: Dict[str, Any]) -> None:
         Choice.__init__(self, choice)
 
         self.grpid = choice.get('grpId')
@@ -24,7 +30,11 @@ class Cast(Choice):
         gc.stopindexing()
 
 class Play(Choice):
-    def __init__(self, choice):
+    grpid: int
+    instanceId: int
+    shouldStop: bool
+
+    def __init__(self, choice: Dict[str, Any]):
         Choice.__init__(self, choice)
 
         self.grpid = choice.get('grpId')

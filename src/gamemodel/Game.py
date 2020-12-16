@@ -1,5 +1,6 @@
 # Class representing full game state at any given point
 
+from typing import Any, Dict, List
 import sys, json, re, time
 sys.path.append(r'./src')
 # from mtga.set_data import all_mtga_cards as cards
@@ -16,21 +17,32 @@ import Choice
 
 
 class Game:
-    def __init__(self, path=''):
+
+    gameObjects: List[GameObject] = []
+    zones: List[Zone] = []
+    players: List[Player] = []
+    turnInfo: Dict[str, Any] = {}
+    choices: List[Choice.Choice] = []
+
+    fp: int = 0
+    path: str
+
+    gameStateId = 0
+    curPlayer: int
+
+    def __init__(self, path: str ='') -> None:
         self.reset()
-        self.fp = 0
         self.path = path
 
         # Only initialize path if it's actually passed
         if path:
             self.parseFile()
 
-    def reset(self):
+    def reset(self) -> None:
         self.gameObjects = []
         self.zones = []
         self.players = []
 
-        self.actionQueue = []
         self.turnInfo = {}
         self.choices = []
 
@@ -38,8 +50,8 @@ class Game:
     
 
 
-    # Helper funtions
-    def addGameObject(self, gameObject):
+    # Helper functions
+    def addGameObject(self, gameObject: GameObject) -> None:
         if gameObject['type'] == 'GameObjectType_Card':
             if gameObject['zoneId'] == self.zoneId('Battlefield'):
                 if 'CardType_Creature' in gameObject['cardTypes']:
@@ -51,7 +63,7 @@ class Game:
         else:
             return GameObject(gameObject)
 
-    def addChoice(self, choice):
+    def addChoice(self, choice: Choice) -> None:
         if choice['actionType'] == 'ActionType_Cast':
             self.choices.append(Choice.Cast(choice))
         elif choice['actionType'] == 'ActionType_Play':
@@ -61,37 +73,37 @@ class Game:
         else:
             self.choices.append(Choice.Choice(choice))
 
-    def zoneName(self, id):
+    def zoneName(self, id: int) -> str:
         return next(x.type for x in self.zones if x.id == id)
 
-    def zoneId(self, name):
+    def zoneId(self, name: str) -> int:
         return next(x.id for x in self.zones if name.lower() in x.type.lower())
 
-    def gameObject(self, instanceid):
+    def gameObject(self, instanceid: int) -> GameObject:
         return next(x for x in self.gameObjects if x.instanceId == instanceid)
 
     # Get subsets of gameObjects
-    def permanents(self):
+    def permanents(self) -> List[Permanent]:
         return [x for x in self.gameObjects if isinstance(x, Permanent)]
 
-    def creatures(self):
+    def creatures(self) -> List[Creature]:
         return [x for x in self.gameObjects if isinstance(x, Creature)]
 
-    def lands(self):
+    def lands(self) -> List[Land]:
         return [x for x in self.gameObjects if isinstance(x, Land)]
 
-    def graveyard(self):
-        return [x for x in self.gameObjects if self.zoneName(x.zone) == 'ZoneType_Graveyard']
+    def graveyard(self) -> List[Card]:
+        return [x for x in self.gameObjects if self.zoneName(x.zone) == 'ZoneType_Graveyard' and isinstance(x, Card)]
 
-    def hand(self):
+    def hand(self) -> List[Card]:
         # return [self.zoneName(x.zone) for x in self.gameObjects]
-        return [x for x in self.gameObjects if self.zoneName(x.zone) == 'ZoneType_Hand']
+        return [x for x in self.gameObjects if self.zoneName(x.zone) == 'ZoneType_Hand' and isinstance(x, Card)]
         
     
     # Log parsing
 
     # Parses file, game state will reflect state at end of file
-    def parseFile(self):
+    def parseFile(self) -> None:
         f = open(self.path)
         for line in f:
             if line.__contains__("{") and line.__contains__("}"):
@@ -99,8 +111,8 @@ class Game:
         f.close()
 
     # Updates game state from changes to file
-    # Right now pretty much just copy of parseFile but might change later and should probably be seperate
-    def update(self):
+    # Right now pretty much just copy of parseFile but might change later and should probably be separate
+    def update(self) -> None:
         f = open(self.path)
         f.seek(self.fp)
         for line in f:
@@ -109,7 +121,7 @@ class Game:
         f.close()
 
     # Parses a single line passed as a string
-    def parseLine(self, line):
+    def parseLine(self, line: str) -> None:
         try:
             # Parse transaction
             trans = json.loads(re.sub(r'^.*?{', '{', line))
@@ -121,9 +133,9 @@ class Game:
         elif 'matchGameRoomStateChangedEvent' in trans:
             self.parseGameRoomChange(trans)
 
-    # Parses game state changed event (i.e. game start)\
+    # Parses game state changed event (i.e. game start)
     # Mostly for figuring out which player the AI actually is
-    def parseGameRoomChange(self, trans):
+    def parseGameRoomChange(self, trans: Dict[str, Any]) -> None:
         # Don't want to reset at end of game while testing
         # Might be worth changing so "Game" encapsulates one game instead of session
         if trans['matchGameRoomStateChangedEvent']['gameRoomInfo'].get('stateType') != 'MatchGameRoomStateType_Playing':
@@ -131,12 +143,12 @@ class Game:
         # Reset variables
         self.reset()
         # Set current player to proper one
-        players = trans['matchGameRoomStateChangedEvent']['gameRoomInfo']['gameRoomConfig'].get('reservedPlayers')
+        players: Dict[str, Any] = trans['matchGameRoomStateChangedEvent']['gameRoomInfo']['gameRoomConfig'].get('reservedPlayers')
         if players:
-                self.curPlayer = next(x['teamId'] for x in players if x['playerName'] == config.playername)
+            self.curPlayer = next(x['teamId'] for x in players if x['playerName'] == config.playername)
 
     # Parses messages
-    def parseMessages(self, trans):
+    def parseMessages(self, trans: Dict[str, Any]) -> None:
         try: 
             msgs = trans['greToClientEvent']['greToClientMessages']
         except:
@@ -151,7 +163,7 @@ class Game:
         # if len([x for x in msgs if x['type'] == 'GREMessageType_ActionsAvailableReq']) == 0:
         #     self.choices = []
 
-    def updateGameState(self, msg):
+    def updateGameState(self, msg: Dict[str, Any]) -> None:
         for key in msg.keys():
             if key in ('type', 'msgId', 'actions', 'annotations'):
                 continue
@@ -165,8 +177,8 @@ class Game:
                 self.turnInfo = msg[key]
                 continue
             
-            id = dh.keyid.get(key, '')
-            updated = False
+            id: str = dh.keyid.get(key, '')
+            updated: bool = False
 
             if key != 'diffDeletedInstanceIds':
                 for new in msg[key]:
@@ -198,7 +210,7 @@ class Game:
             else:
                 self.gameObjects = [x for x in self.gameObjects if x.instanceId not in msg[key]]
 
-    def updateChoices(self, actions):
+    def updateChoices(self, actions: List[Choice.Choice]):
         self.choices = []
         for action in actions.get('actions'):
             self.addChoice(action)

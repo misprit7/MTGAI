@@ -1,9 +1,19 @@
 # GameObject and inheritors
 
+from typing import Any, Dict, List
 import datahelper as dh
 
 class GameObject:
-    def __init__(self, gameObject):
+    grpId: int
+    instanceId: int
+    owner: int
+    controller: int
+    visibility: str
+    type: str
+    zone: int
+    name: str
+
+    def __init__(self, gameObject: Dict[str, Any]) -> None:
         self.grpId = gameObject.get('grpId')
         self.instanceId = gameObject.get('instanceId')
         self.owner = gameObject.get('ownerSeatId')
@@ -15,14 +25,21 @@ class GameObject:
         self.name = '' if 'name' not in gameObject else dh.loctext(gameObject.get('name'))
         
 class Card(GameObject):
-    def __init__(self, gameObject):
+    cardTypes: List[str]
+    color: List[str]
+
+    def __init__(self, gameObject) -> None:
         GameObject.__init__(self, gameObject)
         self.cardTypes = gameObject.get('cardTypes')
         self.color = gameObject.get('color')
         
 
 class Permanent(Card):
-    def __init__(self, gameObject):
+    isTapped: bool
+    subtypes: List[str]
+    supertypes: List[str]
+
+    def __init__(self, gameObject) -> None:
         Card.__init__(self, gameObject)
 
         self.isTapped = gameObject.get('isTapped', False)
@@ -30,6 +47,11 @@ class Permanent(Card):
         self.supertypes = gameObject.get('supertypes', [])
 
 class Creature(Permanent):
+    power: int
+    toughness: int
+    hasSummoningSickness: bool
+    attackState: str
+
     def __init__(self, gameObject):
         Permanent.__init__(self, gameObject)
 

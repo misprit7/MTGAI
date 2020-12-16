@@ -7,34 +7,33 @@
 # loc is a dictionary relating text ids with text
 # enums is a list of dictionaries associating misc. attributes with their ids
 
-import json, os, re, sys
+import json, os, sys
 from enum import Enum
 from pathlib import Path
+from typing import Dict
 
-def _get_data_location_hardcoded():
-    root = os.environ.get(
+def _get_data_location_hardcoded() -> str:
+    root: str = os.environ.get(
         "ProgramFiles",
         r"C:\Program Files"
     )
     return os.path.join(root, "Wizards of the Coast", "MTGA", "MTGA_Data", "Downloads", "Data")
 
-def get_data_location():
-    current_os = sys.platform
-    if current_os not in ["darwin", "win32"]:
-        raise
+def get_data_location() -> str:
+    current_os: str = sys.platform
 
     return {
         "darwin": get_darwin_data_location,
         "win32": get_win_data_location,
     }[current_os]()
 
-def get_darwin_data_location():
+def get_darwin_data_location() -> str:
     return os.path.join(
         os.path.expanduser("~"),
         "Library/Application Support/com.wizards.mtga/Downloads/Data",
     )
 
-def get_win_data_location():
+def get_win_data_location() -> str:
     try:
         from winreg import ConnectRegistry, OpenKey, HKEY_LOCAL_MACHINE, QueryValueEx
         registry_connection = ConnectRegistry(None, HKEY_LOCAL_MACHINE)
@@ -50,9 +49,9 @@ def get_win_data_location():
     return data_location
 
 # def getMtgaData():
-data_location = get_data_location()
+data_location: str = get_data_location()
 
-json_filepaths = {"enums": "", "cards": "", "abilities": "", "loc": ""}
+json_filepaths: Dict[str, str] = {"enums": "", "cards": "", "abilities": "", "loc": ""}
 
 # A newer file SHOULD be the preference; alpha sort of hashes may be out of order
 # Otherwise it will be necessary to find which is really used
@@ -79,18 +78,18 @@ with open(json_filepaths["enums"], "r", encoding="utf-8") as enums_in:
 
 
 # Helper functions, name pretty much describes them
-def namefromgrpid(grpid):
+def namefromgrpid(grpid: int) -> str:
     return loctext([x['titleId'] for x in cards if x['grpid'] == grpid][0])
 
-def loctext(id):
+def loctext(id: str) -> str:
     return next(x['text'] for x in loc if x['id'] == id)
 
-def cmcfromgrpid(grpid):
+def cmcfromgrpid(grpid: int) -> int:
     return next(x['cmc'] for x in cards if x['grpid'] == grpid)
 
 
 # Constants
-keyid = {
+keyid: Dict[str, str] = {
     'actions': 'instanceId', 
     'annotations': 'id', 
     'gameObjects': 'instanceId',
