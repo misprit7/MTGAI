@@ -8,23 +8,7 @@ This project is essentially split up into 4 main sections: log parsing, controll
 
 ### Log Parsing
 
-Log parsing is currently done in the logparser.py module. Luckily, MTGA has an option to enable full game logs, which logs every single message exchanged between client and server. This data is all plaintext json, making it relatively easy to parse. While there are many different kinds of messages, the ones we mostly care about are game state ones. From the perspective of the client the game at every point is encapsulated in a gamestate json object. Whenever there's a change to this gamestate the server sends a json message representing the differences. 
-
-The structure for the parts of gamestate that we care about are as follows:
-
-```json
-{
-    "gameinfo": { ... }, 
-    "gameObjects": { ... }, 
-    "players": { ... }, 
-    "teams": { ... }, 
-    "timers": { ... }, 
-    "turnInfo": { ... },
-    "zones": { ... }
-}
-```
-
-These logs are always here: 
+Parsing the logs is described [here](./doc/log-messages.md). These logs are always here: 
 
 ```
 %APPDATA%\..\LocalLow\Wizards Of The Coast\MTGA\Player.log
@@ -42,7 +26,7 @@ The AI actually makes the decisions regarding game actions. Not too much has bee
 
 Once the AI has made a decision the program must interact with the GUI to actually carry it out. This is done through pyautogui, a python library that can click, drag and type as if a person on the computer was. This is interacts with the UI to make the appropriate action. 
 
-## Setup for Devs
+## Setup for Dev
 
 ### Virtual Environment
 Use a virtual environment for development. This is used to keep package versions consistent. To install this feature, run the following: 
