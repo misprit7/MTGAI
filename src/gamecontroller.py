@@ -12,7 +12,7 @@ from gamemodel import datahelper as dh
 
 cards: Dict[int, Tuple[int, int]] = {}
 indexing: bool = True
-# Since calling movement 
+indexreset: bool = False
 actionqueue: List[Callable] = []
 
 
@@ -104,6 +104,11 @@ def beginindexing():
 def stopindexing():
     indexing = False
 
+def resetindexing():
+    cards.clear()
+    actionqueue.clear()
+    resetindexing = True
+
 def hoverover(zone):
     start = (0, 0)
     end = (0, 0)
@@ -121,12 +126,15 @@ def hoverover(zone):
     ag.moveTo(end[0], end[1], duration=duration)
 
 def indexhover():
-    for i in dh.zones:
-        if indexing:
-            hoverover(i)
-        for action in actionqueue:
-            action()
-        actionqueue.clear()
+    while True:
+        for i in dh.zones:
+            if indexing:
+                hoverover(i)
+            for action in actionqueue:
+                action()
+            actionqueue.clear()
+            if resetindexing:
+                break
 
 def readhovercards():
     f = open(config.logpath)
@@ -159,7 +167,7 @@ def readhovercards():
                     # print('New card. ID: ' + str(lastid) + '; pos: ' + str(cards[lastid]))
 
             except:
-                print("line parse failed")
+                # print("line parse failed")
                 pass
 
 if __name__ == "__main__":

@@ -1,55 +1,62 @@
 # Intelligence behind game decisions
-# 
+#
 # Note that this is heavily WIP right now, so it's pretty much all test stuff for the moment
 
 import sys
-sys.path.append(r'./src/gamemodel')
+import time
+
+
+sys.path.append(r"./src/gamemodel")
 import Game
 import gamecontroller as gc
+import datahelper as dh
+import ConfigHelper as config
+from Choice import Cast, Pass, Play
+from GameObject import Creature
 
 
-def onchoice(gamestate, choices):
-    game = Game.Game(gamestate)
-    # print(choices)
-    # print('\n')
-    # print([x for x in gamestate['gameObjects'] if x['zoneId'] == game.zoneId('hand')])
+def playLand(game: Game) -> bool:
     try:
-        landchoice = next(x for x in choices['actions'] if x['actionType'] == 'ActionType_Play')
+        playchoice = next(x for x in game.choices if isinstance(x, Play))
+        playchoice.execute()
+        print("Playing land...")
+        return True
+    except:
+        return False
 
-        cardnum = next(i for i, x in enumerate(game.hand()) if x.instanceId == landchoice['instanceId'])
 
-        hand = game.hand()
+def playCreature(game: Game) -> bool:
+    try:
+        playchoice = next(
+            x
+            for x in game.choices
+            if isinstance(x, Cast)
+            and "CardType_Creature" in game.gameObject(x.instanceId).cardTypes
+            and x.hasAutoTap == True
+        )
+        print("Playing creature...")
+        playchoice.execute()
+        return True
+    except:
+        return False
 
-        print('land: ' + str(landchoice['grpId']) + '; num: ' + str(cardnum))
 
-        gc.playcard(cardnum, 0, [len(game.hand())])
+def passTurn(game: Game) -> bool:
+    try:
+        playchoice = next(x for x in game.choices if isinstance(x, Pass))
+        print("Passing...")
+        playchoice.execute()
+        return True
+    except:
+        return False
 
-        return
-    except Exception as e:
-        print('no land to play: ')
-        print(e)
 
-    # try:
-    # print(next(game.gameObject(x['grpId']).type for x in choices['actions'] if x['actionType'] == 'ActionType_Cast'))
-    creaturechoice = next(x for x in choices['actions'] if x['actionType'] == 'ActionType_Cast' and 'CardType_Creature' in game.gameObject(x['instanceId']).cardTypes)
-
-    print('creature: ' + str(creaturechoice['instanceId']))
-
-    cardnum = next(i for i, x in enumerate(game.hand()) if x.instanceId == creaturechoice['instanceId'])
-
-    print('creature: ' + str(creaturechoice['grpId']) + '; num: ' + str(cardnum))
-
-    gc.playcard(cardnum, 0, [len(game.hand())])
-
-    return
-    # except:
-    #     print('no creature to play')
-    
-    # print('passing...')
-    # gc.passpriority()
-    # print([Game.dh.name(x['grpId']) for x in choices['actions'] if x['actionType'] == 'ActionType_Play'])
-    # print([x['actionType'] for x in choices['actions']])
-
-if __name__ == '__main__':
-    # gc.startgame('bot')
-    pass
+if __name__ == "__main__":
+    game = Game.Game(config.logpath)
+    gc.beginindexing()
+    while 1:
+        if game.update() and game.turnInfo["decisionPlayer"] == game.curPlayer:
+            gc.resetindexing()
+            if not playLand(game) and not playCreature(game) and not passTurn(game):
+                print("No action available!")
+        time.sleep(1)

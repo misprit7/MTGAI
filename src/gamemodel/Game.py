@@ -25,7 +25,7 @@ class Game:
 
     fp: int = 0
     path: str
-
+    nummessages: int = 0
     gameStateId = 0
     curPlayer: int
 
@@ -110,27 +110,32 @@ class Game:
         f.close()
 
     # Updates game state from changes to file
-    # Right now pretty much just copy of parseFile but might change later and should probably be separate
-    def update(self) -> None:
+    def update(self) -> bool:
         f = open(self.path)
         f.seek(self.fp)
+        ret: bool = False
         for line in f:
             if line.__contains__("{") and line.__contains__("}"):
-                self.parseLine(line)
+                if self.parseLine(line):
+                    ret = True
+        self.fp = f.tell()
         f.close()
+        return ret
 
     # Parses a single line passed as a string
-    def parseLine(self, line: str) -> None:
+    def parseLine(self, line: str) -> bool:
         try:
             # Parse transaction
             trans = json.loads(re.sub(r'^.*?{', '{', line))
         except:
-            return
+            return False
 
         if 'greToClientEvent' in trans and 'greToClientMessages' in trans['greToClientEvent']:
             self.parseMessages(trans)
+            return True
         elif 'matchGameRoomStateChangedEvent' in trans:
             self.parseGameRoomChange(trans)
+        return False
 
     # Parses game state changed event (i.e. game start)
     # Mostly for figuring out which player the AI actually is
@@ -160,7 +165,7 @@ class Game:
                 self.updateChoices(msg.get('actionsAvailableReq'))
         
         # if len([x for x in msgs if x['type'] == 'GREMessageType_ActionsAvailableReq']) == 0:
-        #     self.choices = []
+        #     self.choices.clear()
 
     def updateGameState(self, msg: Dict[str, Any]) -> None:
         for key in msg.keys():
@@ -199,7 +204,7 @@ class Game:
                     
                     if not updated:
                         if key == 'gameObjects':
-                            self.gameObjects.append(GameObject(new))
+                            self.gameObjects.append(self.addGameObject(new))
                         elif key == 'players':
                             self.players.append(Player(new))
                         elif key == 'zones':
@@ -210,7 +215,7 @@ class Game:
                 self.gameObjects = [x for x in self.gameObjects if x.instanceId not in msg[key]]
 
     def updateChoices(self, actions: List[Choice.Choice]):
-        self.choices = []
+        self.choices.clear()
         for action in actions.get('actions'):
             self.addChoice(action)
 
