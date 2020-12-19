@@ -44,7 +44,6 @@ class Play(Choice):
 
     def execute(self):
         gc.playcard(self.instanceId)
-        gc.stopindexing()
 
 class Pass(Choice):
     def __init__(self, choice):

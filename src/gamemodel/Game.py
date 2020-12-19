@@ -5,7 +5,6 @@ import sys, json, re, time
 sys.path.append(r'./src')
 # from mtga.set_data import all_mtga_cards as cards
 import datahelper as dh
-import logparser as lp
 import ConfigHelper as config
 import gamecontroller as gc
 from GameObject import *
@@ -218,11 +217,11 @@ class Game:
 
 if __name__ == "__main__":
     game = Game(config.logpath)
+    gc.beginindexing()
     while 1:
         game.update()
         if game.turnInfo['decisionPlayer'] == game.curPlayer:
             print([x.actionType for x in game.choices])
-            gc.beginindexing()
             playchoice = next(x for x in game.choices if x.actionType == 'ActionType_Play')
-            # playchoice.execute()
+            playchoice.execute()
         time.sleep(1)

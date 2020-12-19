@@ -3,9 +3,9 @@
 # Note that this is heavily WIP right now, so it's pretty much all test stuff for the moment
 
 import sys
-import gamecontroller as gc, logparser as lp
 sys.path.append(r'./src/gamemodel')
 import Game
+import gamecontroller as gc
 
 
 def onchoice(gamestate, choices):
@@ -52,4 +52,4 @@ def onchoice(gamestate, choices):
 
 if __name__ == '__main__':
     # gc.startgame('bot')
-    lp.parseGame(onchoice = onchoice, onperiod = print('finished'), period = 10, live = True)
+    pass
