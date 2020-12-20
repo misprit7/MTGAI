@@ -52,3 +52,29 @@ class Pass(Choice):
     
     def execute(self):
         gc.passpriority()
+        
+class DeclareAttackers(Choice):
+    attackerId: int
+    attackers: List[int]
+    qualifiedAttackers: List[int]
+
+    def __init__ (self, msg: Dict[str, Any]) -> None:
+        self.actionType = 'ActionType_DeclareAttackers'
+        self.attackerId = msg.get('systemSeatIds')[0]
+        self.attackers = [x['attackerInstanceId'] for x in msg.get('declareAttackersReq').get('attackers')]
+        self.qualifiedAttackers = [x['attackerInstanceId'] for x in msg.get('declareAttackersReq').get('qualifiedAttackers')]
+    
+    def execute(self):
+        gc.allattack()
+        
+class DeclareBlockers(Choice):
+    blockerId: int
+    blockers: Dict[str, Any]
+
+    def __init__ (self, msg: Dict[str, Any]) -> None:
+        self.actionType = 'ActionType_DeclareBlockers'
+        self.blockerId = msg.get('systemSeatIds')[0]
+        self.blockers = msg.get('declareBlockersReq').get('blockers')
+
+    def execute(self):
+        gc.passpriority()

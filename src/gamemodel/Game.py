@@ -110,6 +110,7 @@ class Game:
         f.close()
 
     # Updates game state from changes to file
+    # Returns true if any update since last time, false otherwise
     def update(self) -> bool:
         f = open(self.path)
         f.seek(self.fp)
@@ -123,6 +124,7 @@ class Game:
         return ret
 
     # Parses a single line passed as a string
+    # Returns true if line is parsed successfully, false otherwise
     def parseLine(self, line: str) -> bool:
         try:
             # Parse transaction
@@ -163,6 +165,10 @@ class Game:
                 self.updateGameState(msg.get('gameStateMessage'))
             elif msg.get('type') == 'GREMessageType_ActionsAvailableReq':
                 self.updateChoices(msg.get('actionsAvailableReq'))
+            elif msg.get('type') == 'GREMessageType_DeclareAttackersReq':
+                self.updateAttackers(msg)
+            elif msg.get('type') == 'GREMessageType_DeclareBlockersReq':
+                self.updateBlockers(msg)
         
         # if len([x for x in msgs if x['type'] == 'GREMessageType_ActionsAvailableReq']) == 0:
         #     self.choices.clear()
@@ -174,7 +180,7 @@ class Game:
             
             if type(msg[key]) != dict and type(msg[key]) != list:
                 if key == 'gameStateId':
-                    self.gameStateId = 26
+                    self.gameStateId = msg[key]
                 continue
 
             if key == 'turnInfo':
@@ -218,6 +224,17 @@ class Game:
         self.choices.clear()
         for action in actions.get('actions'):
             self.addChoice(action)
+
+    def updateAttackers(self, msg: Dict[str, Any]):
+        assert msg.get('gameStateId') == self.gameStateId
+        self.choices.clear()
+        self.choices.append(Choice.DeclareAttackers(msg))
+
+    def updateBlockers(self, msg: Dict[str, Any]):
+        assert msg.get('gameStateId') == self.gameStateId
+        self.choices.clear()
+        self.choices.append(Choice.DeclareBlockers(msg))
+
 
 
 if __name__ == "__main__":

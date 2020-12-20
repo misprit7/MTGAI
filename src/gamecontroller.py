@@ -41,11 +41,18 @@ def openingHand(keep):
     else:
         ag.moveTo(790, 870, duration=0.1)
     click()
+    
+# TODO: Implement this
+def declareAttackers(attackers: List[int]) -> None:
+    for attacker in attackers:
+        pass
 
 def passpriority():
+    time.sleep(1.5)
     press('space')
 
 def allattack():
+    time.sleep(2)
     press('space')
     press('space')
 
