@@ -1,4 +1,3 @@
-
 # Handles the interactions between AI and GUI
 
 from typing import Dict, List, Tuple, Callable
@@ -6,14 +5,15 @@ import pyautogui as ag, numpy as np
 import time, threading, sys, json, re
 import ConfigHelper as config
 from gamemodel import datahelper as dh
+from queue import Queue
+
 # For OCR, see https://stackoverflow.com/questions/48118094/pytesseract-trying-to-detect-text-from-on-screen
 # https://stackoverflow.com/questions/48928592/how-to-get-the-co-ordinates-of-the-text-recogonized-from-image-using-ocr-in-pyth
 # pytesseract.pytesseract.tesseract_cmd = 'C:\\Program Files (x86)\\Tesseract-OCR\\tesseract.exe'
 
 cards: Dict[int, Tuple[int, int]] = {}
 indexing: bool = True
-indexreset: bool = False
-actionqueue: List[Callable] = []
+actionqueue: Queue = Queue(0)
 
 
 ###############################################################################
@@ -25,7 +25,7 @@ def startgame(mode):
     ag.moveTo(1730, 1000)
     ag.click()
     time.sleep(0.3)
-    if mode == 'bot':
+    if mode == "bot":
         ag.moveTo(1730, 630, duration=0.1)
         scroll(-10)
         ag.moveRel(50, 5, duration=0.1)
@@ -35,58 +35,66 @@ def startgame(mode):
     ag.moveTo(1730, 1000)
     click()
 
+
 def openingHand(keep):
     if keep:
         ag.moveTo(1135, 870, duration=0.1)
     else:
         ag.moveTo(790, 870, duration=0.1)
     click()
-    
+
+
 # TODO: Implement this
 def declareAttackers(attackers: List[int]) -> None:
     for attacker in attackers:
         pass
 
+
 def passpriority():
     time.sleep(1.5)
-    press('space')
+    press("space")
+
 
 def allattack():
-    time.sleep(2)
-    press('space')
-    press('space')
+    time.sleep(3)
+    press("space")
+    press("space")
+
 
 def chooseoption(numoptions, choice):
     if numoptions == 2:
         ag.moveTo(1200 if choice == 2 else 720, 450, duration=0.1)
         click()
 
-def playcard(id):
-    while id not in cards:
-        time.sleep(0.1)
-    # Wait for indexing to stop
-    stopindexing()
-    actionqueue.append(lambda: dragcard(cards[id]))
+
+def playcard(id: int):
+    actionqueue.put(lambda: hoverover(dh.zones.hand))
+    actionqueue.put(lambda: dragcard(cards[id]))
+
 
 ###############################################################################
 # Basic Wrappers for PyAutoGUI functions
 ###############################################################################
+
 
 def click():
     ag.mouseDown()
     time.sleep(0.1)
     ag.mouseUp()
 
+
 # Have to scroll in chunks for arena to accept it
 def scroll(amount):
     for i in range(amount if amount > 0 else -amount):
         ag.scroll(5 if amount > 0 else -5)
+
 
 # Have to hold a bit for arena to accept it
 def press(key):
     ag.keyDown(key)
     time.sleep(0.1)
     ag.keyUp(key)
+
 
 # Consistent spot to reset mouse to
 def mreset():
@@ -97,24 +105,37 @@ def dragcard(pos):
     ag.moveTo(pos[0], pos[1], duration=0.1)
     ag.dragTo(960, 540, duration=0.3)
 
+
 ###############################################################################
 # Indexing function
 ###############################################################################
 
+
 def beginindexing():
     readthread = threading.Thread(target=readhovercards)
-    hoverthread = threading.Thread(target=indexhover)
+    hoverthread = threading.Thread(target=guiTask)
 
+    # addIndexing()
     readthread.start()
     hoverthread.start()
 
+
 def stopindexing():
-    indexing = False
+    with actionqueue.mutex:
+        actionqueue.queue.clear()
+
 
 def resetindexing():
     cards.clear()
-    actionqueue.clear()
-    resetindexing = True
+    with actionqueue.mutex:
+        actionqueue.queue.clear()
+    # addIndexing()
+
+
+def addIndexing():
+    for z in dh.zones:
+        actionqueue.put(lambda z=z: hoverover(z))
+
 
 def hoverover(zone):
     start = (0, 0)
@@ -132,16 +153,13 @@ def hoverover(zone):
     ag.click()
     ag.moveTo(end[0], end[1], duration=duration)
 
-def indexhover():
+
+def guiTask():
     while True:
-        for i in dh.zones:
-            if indexing:
-                hoverover(i)
-            for action in actionqueue:
-                action()
-            actionqueue.clear()
-            if resetindexing:
-                break
+        if not actionqueue.empty():
+            actionqueue.get()()
+        time.sleep(0.1)
+
 
 def readhovercards():
     f = open(config.logpath)
@@ -150,7 +168,6 @@ def readhovercards():
 
     lastpnt = (0, 0)
     lastid = 0
-    
 
     while indexing:
         where = f.tell()
@@ -161,21 +178,27 @@ def readhovercards():
         else:
             try:
                 # trans = json.loads(re.sub(r'^.*?{', '{', msg.replace('\n', ' ')))
-                trans = json.JSONDecoder().raw_decode(re.sub(r'^.*?{', '{', msg.replace('\n', ' ')))[0]
-                uiMessage = trans['payload']['uiMessage']['onHover']
+                trans = json.JSONDecoder().raw_decode(
+                    re.sub(r"^.*?{", "{", msg.replace("\n", " "))
+                )[0]
+                uiMessage = trans["payload"]["uiMessage"]["onHover"]
                 pos = ag.position()
 
-                if 'objectId' in uiMessage:
-                    id = uiMessage['objectId']
+                if "objectId" in uiMessage:
+                    id = uiMessage["objectId"]
                     lastid = id
                     lastpnt = (pos[0], pos[1])
                 else:
-                    cards[lastid] = ((lastpnt[0] + pos[0])/2, (lastpnt[1] + pos[1])/2)
+                    cards[lastid] = (
+                        (lastpnt[0] + pos[0]) / 2,
+                        (lastpnt[1] + pos[1]) / 2,
+                    )
                     # print('New card. ID: ' + str(lastid) + '; pos: ' + str(cards[lastid]))
 
             except:
                 # print("line parse failed")
                 pass
+
 
 if __name__ == "__main__":
     # startgame('bot')

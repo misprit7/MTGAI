@@ -133,8 +133,7 @@ class Game:
             return False
 
         if 'greToClientEvent' in trans and 'greToClientMessages' in trans['greToClientEvent']:
-            self.parseMessages(trans)
-            return True
+            return self.parseMessages(trans)
         elif 'matchGameRoomStateChangedEvent' in trans:
             self.parseGameRoomChange(trans)
         return False
@@ -154,22 +153,28 @@ class Game:
             self.curPlayer = next(x['teamId'] for x in players if x['playerName'] == config.playername)
 
     # Parses messages
-    def parseMessages(self, trans: Dict[str, Any]) -> None:
+    def parseMessages(self, trans: Dict[str, Any]) -> bool:
         try: 
             msgs = trans['greToClientEvent']['greToClientMessages']
         except:
-            return
+            return False
 
+        ret = False
         for msg in msgs:
             if msg.get('type') == 'GREMessageType_GameStateMessage':
                 self.updateGameState(msg.get('gameStateMessage'))
+                ret = True
             elif msg.get('type') == 'GREMessageType_ActionsAvailableReq':
                 self.updateChoices(msg.get('actionsAvailableReq'))
+                ret = True
             elif msg.get('type') == 'GREMessageType_DeclareAttackersReq':
                 self.updateAttackers(msg)
+                ret = True
             elif msg.get('type') == 'GREMessageType_DeclareBlockersReq':
                 self.updateBlockers(msg)
+                ret = True
         
+        return ret
         # if len([x for x in msgs if x['type'] == 'GREMessageType_ActionsAvailableReq']) == 0:
         #     self.choices.clear()
 
